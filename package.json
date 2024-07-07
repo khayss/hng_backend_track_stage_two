@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build"
   },
   "author": "Kufre Samuel",
   "license": "ISC",
