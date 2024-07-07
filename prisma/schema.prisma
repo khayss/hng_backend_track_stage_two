@@ -1,0 +1,38 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model User {
+  userId        String               @id @unique @default(uuid())
+  firstName     String
+  lastName      String
+  email         String               @unique
+  phone         String?
+  password      String
+  organisations UserOnOrganisation[]
+  organisation  Organisation[]
+}
+
+model Organisation {
+  orgId       String               @id @unique @default(uuid())
+  name        String
+  createdBy   String
+  user        User                 @relation(fields: [createdBy], references: [userId])
+  description String?
+  users       UserOnOrganisation[]
+}
+
+model UserOnOrganisation {
+  userId       String
+  orgId        String
+  user         User         @relation(fields: [userId], references: [userId])
+  organisation Organisation @relation(fields: [orgId], references: [orgId])
+
+  @@id([userId, orgId])
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
