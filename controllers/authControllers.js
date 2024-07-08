@@ -6,7 +6,6 @@ import validate, {
   loginUserSchema,
   registerUserSchema,
 } from "../utils/validation.js";
-import client from "../database/db.js";
 import config from "../config/config.js";
 import prisma from "../database/db.js";
 
@@ -23,9 +22,6 @@ export const registerUser = catchErrorFunc(async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  //   const createUserQuery =
-  //     "INSERT INTO users (user_id, email, password, first_name, last_name, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *";
-
   try {
     const createdUser = await prisma.user.create({
       data: {
@@ -34,6 +30,7 @@ export const registerUser = catchErrorFunc(async (req, res) => {
         password: hashedPassword,
         firstName,
         lastName,
+        phone,
         organisations: {
           create: [
             {
