@@ -1,24 +1,13 @@
 import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import morgan from "morgan";
-import config from "./config/config.js";
-import publicRouter from "./routes/public.routes.js";
-import authRouter from "./routes/auth.routes.js";
-import errorHandler from "./middlewares/errorHandler.js";
 
-const app = express();
+import config from "./config/config.js";
+import createServer from "./server.js";
+
+const app = createServer();
+
 const { PORT } = config;
 
-app.use(cors());
-app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.use("/auth", publicRouter);
-app.use("/api", authRouter);
-
-app.use(errorHandler);
 
 startServer();
 
@@ -31,3 +20,4 @@ async function startServer() {
     console.error("Error starting server: ", error);
   }
 }
+
