@@ -2,20 +2,13 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { customAlphabet } from "nanoid";
 import catchErrorFunc from "../utils/catchErrorFunc.js";
-import validate, {
-  loginUserSchema,
-  registerUserSchema,
-} from "../utils/validation.js";
 import config from "../config/config.js";
 import prisma from "../database/db.js";
 
 const { JWT_SECRET } = config;
 
 export const registerUser = catchErrorFunc(async (req, res) => {
-  const { email, password, firstName, lastName, phone } = validate(
-    registerUserSchema,
-    req.body
-  );
+  const { password, firstName, email, lastName, phone } = req.body;
 
   const nanoId = customAlphabet("1234567890abcdef", 16);
   const userId = nanoId();
@@ -27,10 +20,10 @@ export const registerUser = catchErrorFunc(async (req, res) => {
       data: {
         userId,
         email,
-        password: hashedPassword,
         firstName,
         lastName,
         phone,
+        password: hashedPassword,
         organisations: {
           create: [
             {
@@ -76,7 +69,7 @@ export const registerUser = catchErrorFunc(async (req, res) => {
 });
 
 export const loginUser = catchErrorFunc(async (req, res) => {
-  const { email, password } = validate(loginUserSchema, req.body);
+  const { email, password } = req.body;
 
   const user = await prisma.user.findUnique({
     where: {
@@ -110,7 +103,8 @@ export const loginUser = catchErrorFunc(async (req, res) => {
     }
   );
 
-  const { password: userPassword, ...userDetails } = user;
+  // eslint-disable-next-line no-unused-vars
+  const { password: _, ...userDetails } = user;
 
   res.status(200).json({
     status: "success",

@@ -1,10 +1,10 @@
 import supertest from "supertest";
-import createServer from "../server";
 import sinon from "sinon";
 import jwt from "jsonwebtoken";
 import config from "../config/config";
+import app from "../app";
+import prisma from "../database/db";
 
-const app = createServer();
 describe("unit tests", () => {
   describe("token generation", () => {
     let clock;
@@ -16,6 +16,10 @@ describe("unit tests", () => {
     const userEmail = "user@test.com";
 
     beforeEach(async () => {
+      await prisma.user.deleteMany({});
+      await prisma.organisation.deleteMany({});
+      await prisma.userOnOrganisation.deleteMany({});
+
       clock = sinon.useFakeTimers();
       token = await jwt.sign({ userId, email: userEmail }, config.JWT_SECRET, {
         expiresIn: "24h",
@@ -101,83 +105,80 @@ describe("unit tests", () => {
 });
 
 describe("end to end tests", () => {
-    it("registers user successfully with default organisation", async () => {
-        const user = {
-            firstName: "John",
-            lastName: "Doe",
-            email: "john@doe.com",
-            password: "password",
-        };
+  it("registers user successfully with default organisation", async () => {
+    const user = {
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@doe.com",
+      password: "password",
+    };
 
-        const res = await supertest(app)
-            .post("/auth/register")
-            .send(user)
-            .expect(201);
+    const res = await supertest(app)
+      .post("/auth/register")
+      .send(user)
+      .expect(201);
 
-        expect(res.body.data.firstName).toBe(user.firstName);
-        expect(res.body.data.lastName).toBe(user.lastName);
-        expect(res.body.data.email).toBe(user.email);
-        expect(res.body.data.organisation).toBe("John's Organisation");
-        expect(res.body.data.accessToken).toBeDefined();
-    });
+    expect(res.body.data.firstName).toBe(user.firstName);
+    expect(res.body.data.lastName).toBe(user.lastName);
+    expect(res.body.data.email).toBe(user.email);
+    expect(res.body.data.organisation).toBe("John's Organisation");
+    expect(res.body.data.accessToken).toBeDefined();
+  });
 
-    it("logs user in successfully with valid credentials", async () => {
-        const user = {
-            email: "john@doe.com",
-            password: "password",
-        };
+  it("logs user in successfully with valid credentials", async () => {
+    const user = {
+      email: "john@doe.com",
+      password: "password",
+    };
 
-        const res = await supertest(app)
-            .post("/auth/signin")
-            .send(user)
-            .expect(200);
+    const res = await supertest(app)
+      .post("/auth/signin")
+      .send(user)
+      .expect(200);
 
-        expect(res.body.data.firstName).toBe("John");
-        expect(res.body.data.lastName).toBe("Doe");
-        expect(res.body.data.email).toBe(user.email);
-        expect(res.body.data.accessToken).toBeDefined();
-    });
+    expect(res.body.data.firstName).toBe("John");
+    expect(res.body.data.lastName).toBe("Doe");
+    expect(res.body.data.email).toBe(user.email);
+    expect(res.body.data.accessToken).toBeDefined();
+  });
 
-    it("fails if required fields are missing", async () => {
-        const user = {
-            lastName: "Doe",
-            email: "john@doe.com",
-            password: "password",
-        };
+  it("fails if required fields are missing", async () => {
+    const user = {
+      lastName: "Doe",
+      email: "john@doe.com",
+      password: "password",
+    };
 
-        const res = await supertest(app)
-            .post("/auth/register")
-            .send(user)
-            .expect(422);
+    const res = await supertest(app)
+      .post("/auth/register")
+      .send(user)
+      .expect(422);
 
-        expect(res.body.error).toBe("First name is required");
-    });
+    expect(res.body.error).toBe("First name is required");
+  });
 
-    it("fails if there's duplicate email or userID", async () => {
-        const user1 = {
-            firstName: "John",
-            lastName: "Doe",
-            email: "john@doe.com",
-            password: "password",
-        };
+  it("fails if there's duplicate email or userID", async () => {
+    const user1 = {
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@doe.com",
+      password: "password",
+    };
 
-        const user2 = {
-            firstName: "Jane",
-            lastName: "Doe",
-            email: "john@doe.com",
-            password: "password",
-        };
+    const user2 = {
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "john@doe.com",
+      password: "password",
+    };
 
-        await supertest(app)
-            .post("/auth/register")
-            .send(user1)
-            .expect(201);
+    await supertest(app).post("/auth/register").send(user1).expect(201);
 
-        const res = await supertest(app)
-            .post("/auth/register")
-            .send(user2)
-            .expect(422);
+    const res = await supertest(app)
+      .post("/auth/register")
+      .send(user2)
+      .expect(422);
 
-        expect(res.body.error).toBe("Email already exists");
-    });
+    expect(res.body.error).toBe("Email already exists");
+  });
 });

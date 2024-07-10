@@ -1,13 +1,8 @@
 import "dotenv/config";
-
 import config from "./config/config.js";
-import createServer from "./server.js";
-
-const app = createServer();
+import app from "./app.js";
 
 const { PORT } = config;
-
-
 
 startServer();
 
@@ -20,4 +15,3 @@ async function startServer() {
     console.error("Error starting server: ", error);
   }
 }
-

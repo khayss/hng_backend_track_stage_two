@@ -1,20 +1,4 @@
 import { z } from "zod";
-import { AppError } from "./AppError.js";
-
-export default function validate(schema, data) {
-  const result = schema.safeParse(data);
-  if (result.error) {
-    const errors = result.error.issues.map((issue) => {
-      return {
-        field: issue.path[0],
-        message: issue.message,
-      };
-    });
-
-    throw new AppError("Validation Error", 422, errors);
-  }
-  return result.data;
-}
 
 export const registerUserSchema = z.object({
   email: z
